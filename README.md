@@ -1,24 +1,27 @@
-# Multimodal Emotion Recognition Project
+# multimodel_emotion_recognition
 
-This repository implements an English-only multimodal emotion recognition pipeline based on the PDF blueprint. The text branch uses standard BERT (`bert-base-uncased`), not BERTurk. The project is organized around a practical late-fusion system:
+English-only multimodal emotion recognition project built around the report blueprint. The system uses standard BERT for text, speech emotion analysis for audio, visual emotion analysis for video, and confidence-weighted late fusion for the final prediction.
+
+## Overview
+
+This repository implements a practical multimodal emotion recognition pipeline:
 
 - Text branch: BERT on raw English utterances
-- Audio branch: cached speech embeddings extracted from English audio
-- Video branch: cached visual embeddings extracted from face or clip frames
-- Fusion branch: gated late fusion with modality dropout for robustness
-
-The repository is designed so you can move from raw data to training, evaluation, prediction, and ONNX export with a consistent manifest format.
+- Audio branch: cached speech embeddings and speech-emotion scoring
+- Video branch: frame sampling, face-centered visual emotion scoring
+- Fusion branch: late fusion with robustness to weak or missing modalities
+- Demo app: local upload interface for video emotion analysis
 
 ## What Is Included
 
-- A configurable training pipeline for multimodal classification
-- Manifest validation and leak-aware split utilities
+- Configurable training pipeline for multimodal classification
+- Manifest validation and grouped split utilities
 - Synthetic dataset generation for smoke testing
 - Audio feature extraction with Wav2Vec2-style encoders
 - Video feature extraction with EfficientNet-based frame pooling
 - Evaluation utilities for macro-F1, weighted-F1, accuracy, calibration, and confusion matrices
 - Prediction and ONNX export scripts
-- A local upload-based demo UI for video emotion analysis
+- Local upload-based demo UI for video emotion analysis
 
 ## Project Assumptions
 
@@ -33,7 +36,6 @@ The repository is designed so you can move from raw data to training, evaluation
   - `fear`
   - `disgust`
   - `surprise`
-- Audio and video are trained through cached feature files for efficiency and reproducibility
 
 ## Repository Layout
 
@@ -64,6 +66,7 @@ src/multimodal_emotion/
   models/
   training/
 tests/
+  test_demo_fusion.py
   test_manifest.py
   test_metrics.py
 ```
@@ -78,7 +81,7 @@ pip install -r requirements.txt
 
 ## Manifest Format
 
-Every sample is a JSON object on its own line. The required and optional fields are:
+Each sample is stored as one JSON object per line:
 
 ```json
 {
@@ -98,7 +101,7 @@ Every sample is a JSON object on its own line. The required and optional fields 
 }
 ```
 
-Training requires `text`, `label`, `audio_features_path`, and `video_features_path`. Raw `audio_path` and `video_path` are used by the extraction scripts.
+Training expects `text`, `label`, `audio_features_path`, and `video_features_path`.
 
 ## Quick Start
 
@@ -108,7 +111,7 @@ Generate a synthetic dataset:
 PYTHONPATH=src python3 scripts/build_synthetic_dataset.py --output-dir data/synthetic_demo
 ```
 
-Validate the manifests:
+Validate a manifest:
 
 ```bash
 PYTHONPATH=src python3 scripts/validate_manifest.py \
@@ -125,7 +128,7 @@ PYTHONPATH=src python3 scripts/create_group_splits.py \
   --labels neutral joy sadness anger fear disgust surprise
 ```
 
-Train the real model:
+Train the model:
 
 ```bash
 PYTHONPATH=src python3 scripts/train.py \
@@ -173,7 +176,7 @@ Launch the local upload interface:
 PYTHONPATH=src python3 scripts/run_demo.py --host 127.0.0.1 --port 7860
 ```
 
-The demo follows the report's stage-one recommendation:
+The demo uses the report-aligned first-stage setup:
 
 - English ASR with Whisper
 - Text emotion scoring with BERT
@@ -181,37 +184,8 @@ The demo follows the report's stage-one recommendation:
 - Visual emotion scoring from sampled face frames
 - Confidence-weighted late fusion across available modalities
 
-You upload a video, the app extracts audio, generates or accepts an English transcript, scores each modality, and returns:
-
-- the final fused emotion
-- modality-by-modality predictions
-- the transcript used for the analysis
-- confidence-weighted fusion details
-
-## Feature Extraction
-
-Extract cached audio embeddings from raw waveforms:
-
-```bash
-PYTHONPATH=src python3 scripts/extract_audio_features.py \
-  --input-manifest data/raw/train.jsonl \
-  --output-manifest data/processed/train.jsonl \
-  --feature-dir data/processed/audio_features
-```
-
-Extract cached video embeddings from raw video clips:
-
-```bash
-PYTHONPATH=src python3 scripts/extract_video_features.py \
-  --input-manifest data/processed/train.jsonl \
-  --output-manifest data/processed/train.jsonl \
-  --feature-dir data/processed/video_features
-```
-
 ## Notes
 
-- The default project configuration is fully English-only.
-- The text branch is explicitly standard BERT, not BERTurk.
-- Audio and video extraction require the ML dependencies in `requirements.txt`.
-- The demo UI downloads pretrained models on first use, so the first analysis run is slower than later runs.
-- The current desktop environment used for authoring did not have `torch`, `transformers`, or `torchvision` installed, so the included smoke checks focus on schema, metrics, and synthetic data generation.
+- The text branch is standard BERT, not BERTurk.
+- The demo downloads pretrained models on first use, so the first run is slower.
+- Generated artifacts, demo media, checkpoints, and local environments are ignored in git.
