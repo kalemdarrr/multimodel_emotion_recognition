@@ -1,0 +1,36 @@
+{
+  "experiment_name": "english_multimodal_emotion_tiny",
+  "model": {
+    "labels": [
+      "neutral",
+      "joy",
+      "sadness",
+      "anger",
+      "fear",
+      "disgust",
+      "surprise"
+    ],
+    "text_model_name": "bert-base-uncased",
+    "text_backbone": "bert",
+    "audio_feature_dim": 64,
+    "video_feature_dim": 64,
+    "projection_dim": 64,
+    "fusion_hidden_dim": 128,
+    "dropout": 0.1,
+    "modality_dropout": 0.05,
+    "max_text_length": 64,
+    "freeze_text_encoder": true,
+    "load_pretrained_text_encoder": false
+  },
+  "training": {
+    "epochs": 2,
+    "batch_size": 4,
+    "learning_rate": 5e-05,
+    "weight_decay": 0.0,
+    "gradient_clip_norm": 1.0,
+    "early_stopping_patience": 1,
+    "seed": 42,
+    "device": "cpu",
+    "num_workers": 0
+  }
+}
